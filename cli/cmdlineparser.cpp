@@ -898,20 +898,9 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             }
 
             // Output formatter
-            else if (std::strcmp(argv[i], "--template") == 0 ||
-                     std::strncmp(argv[i], "--template=", 11) == 0) {
-                // "--template format"
-                if (argv[i][10] == '=')
-                    mSettings.templateFormat = argv[i] + 11;
-                else if ((i+1) < argc && argv[i+1][0] != '-') {
-                    printMessage("'--template <template>' is deprecated and will be removed in 2.13 - please use '--template=<template>' instead");
-                    ++i;
-                    mSettings.templateFormat = argv[i];
-                } else {
-                    printError("argument to '--template' is missing.");
-                    return false;
-                }
-                // TODO: bail out when no placeholders are found?
+            else if (std::strncmp(argv[i], "--template=", 11) == 0) {
+                mSettings.templateFormat = argv[i] + 11;
+                // TODO: bail out when no template is provided?
 
                 if (mSettings.templateFormat == "gcc") {
                     mSettings.templateFormat = "{bold}{file}:{line}:{column}: {magenta}warning:{default} {message} [{id}]{reset}\\n{code}";
@@ -931,21 +920,12 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     mSettings.templateLocation = "{file}:{line}:{column}: note: {info}\\n{code}";
                     mSettings.daca = true;
                 }
+                // TODO: bail out when no placeholders are found?
             }
 
-            else if (std::strcmp(argv[i], "--template-location") == 0 ||
-                     std::strncmp(argv[i], "--template-location=", 20) == 0) {
-                // "--template-location format"
-                if (argv[i][19] == '=')
-                    mSettings.templateLocation = argv[i] + 20;
-                else if ((i+1) < argc && argv[i+1][0] != '-') {
-                    printMessage("'--template-location <template>' is deprecated and will be removed in 2.13 - please use '--template-location=<template>' instead");
-                    ++i;
-                    mSettings.templateLocation = argv[i];
-                } else {
-                    printError("argument to '--template-location' is missing.");
-                    return false;
-                }
+            else if (std::strncmp(argv[i], "--template-location=", 20) == 0) {
+                mSettings.templateLocation = argv[i] + 20;
+                // TODO: bail out when no template is provided?
                 // TODO: bail out when no placeholders are found?
             }
 
@@ -1260,7 +1240,7 @@ void CmdLineParser::printHelp()
                   << "                         Coding standards:\n"
                   << "                          * autosar           Autosar (partial)\n"
                   << "                          * cert-c-2016       Cert C 2016 checking\n"
-                  << "                          * cert-c++-2016     Cert C++ 2016 checking (partial)\n"
+                  << "                          * cert-c++-2016     Cert C++ 2016 checking\n"
                   << "                          * misra-c-2012      Misra C 2012\n"
                   << "                          * misra-c-2023      Misra C 2023\n"
                   << "                          * misra-c++-2008    Misra C++ 2008 (partial)\n"
