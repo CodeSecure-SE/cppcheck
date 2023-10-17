@@ -16,11 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "cmdlinelogger.h"
 #include "cmdlineparser.h"
 #include "config.h"
 #include "cppcheckexecutor.h"
 #include "errortypes.h"
 #include "helpers.h"
+#include "importproject.h"
 #include "platform.h"
 #include "redirect.h"
 #include "settings.h"
@@ -33,8 +35,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <list>
+#include <memory>
 #include <set>
+#include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 class TestCmdlineParser : public TestFixture {
@@ -970,8 +975,8 @@ private:
         ASSERT_EQUALS(true, parser->parseFromArgs(3, argv));
         ASSERT_EQUALS(2, settings->nofail.getSuppressions().size());
         auto it = settings->nofail.getSuppressions().cbegin();
-        ASSERT_EQUALS("uninitvar", (*it++).errorId);
-        ASSERT_EQUALS("unusedFunction", (*it).errorId);
+        ASSERT_EQUALS("uninitvar", (it++)->errorId);
+        ASSERT_EQUALS("unusedFunction", it->errorId);
         ASSERT_EQUALS("", logger->str());
     }
 
@@ -1190,90 +1195,90 @@ private:
     void platformWin64() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=win64", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Win64, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Win64, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformWin32A() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=win32A", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Win32A, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Win32A, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformWin32W() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=win32W", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Win32W, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Win32W, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformUnix32() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=unix32", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Unix32, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Unix32, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformUnix32Unsigned() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=unix32-unsigned", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Unix32, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Unix32, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformUnix64() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=unix64", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Unix64, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Unix64, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformUnix64Unsigned() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=unix64-unsigned", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Unix64, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Unix64, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformNative() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=native", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Native, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Native, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformUnspecified() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=unspecified", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Native));
+        ASSERT(settings->platform.set(Platform::Type::Native));
         ASSERT(parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::Unspecified, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::Unspecified, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
     void platformPlatformFile() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--platform=avr8", "file.cpp"};
-        ASSERT(settings->platform.set(cppcheck::Platform::Type::Unspecified));
+        ASSERT(settings->platform.set(Platform::Type::Unspecified));
         ASSERT_EQUALS(true, parser->parseFromArgs(3, argv));
-        ASSERT_EQUALS(cppcheck::Platform::Type::File, settings->platform.type);
+        ASSERT_EQUALS(Platform::Type::File, settings->platform.type);
         ASSERT_EQUALS("", logger->str());
     }
 
@@ -1318,8 +1323,8 @@ private:
         ASSERT_EQUALS(true, parser->parseFromArgs(3, argv));
         ASSERT_EQUALS(2, settings->nomsg.getSuppressions().size());
         auto it = settings->nomsg.getSuppressions().cbegin();
-        ASSERT_EQUALS("uninitvar", (*it++).errorId);
-        ASSERT_EQUALS("unusedFunction", (*it).errorId);
+        ASSERT_EQUALS("uninitvar", (it++)->errorId);
+        ASSERT_EQUALS("unusedFunction", it->errorId);
         ASSERT_EQUALS("", logger->str());
     }
 

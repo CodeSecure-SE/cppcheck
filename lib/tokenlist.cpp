@@ -306,6 +306,7 @@ void TokenList::insertTokens(Token *dest, const Token *src, nonneg int n)
         dest->varId(src->varId());
         dest->tokType(src->tokType());
         dest->flags(src->flags());
+        dest->setMacroName(src->getMacroName());
         src  = src->next();
         --n;
     }
@@ -363,7 +364,7 @@ void TokenList::createTokens(simplecpp::TokenList&& tokenList)
         mTokensFrontBack.back->fileIndex(tok->location.fileIndex);
         mTokensFrontBack.back->linenr(tok->location.line);
         mTokensFrontBack.back->column(tok->location.col);
-        mTokensFrontBack.back->isExpandedMacro(!tok->macro.empty());
+        mTokensFrontBack.back->setMacroName(tok->macro);
 
         tok = tok->next;
         if (tok)
@@ -762,6 +763,8 @@ static void compileTerm(Token *&tok, AST_state& state)
                 tok = tok->linkAt(1);
             else if (Token::Match(tok, "%name% ...") || (state.op.size() == 1 && state.depth == 0 && Token::Match(tok->tokAt(-3), "!!& ) ( %name% ) =")))
                 tok = tok->next();
+            else if (Token::simpleMatch(tok, "decltype (") && Token::simpleMatch(tok->linkAt(1), ") ::"))
+                tok = tok->linkAt(1);
             tok = tok->next();
             if (Token::Match(tok, "%str%")) {
                 while (Token::Match(tok, "%name%|%str%"))
@@ -836,7 +839,8 @@ static void compileScope(Token *&tok, AST_state& state)
             if (Token::Match(lastOp, ":: %name%"))
                 lastOp = lastOp->next();
             if (Token::Match(lastOp, "%name%") &&
-                (lastOp->next() == tok || (Token::Match(lastOp, "%name% <") && lastOp->linkAt(1) && tok == lastOp->linkAt(1)->next())))
+                (lastOp->next() == tok ||
+                 (Token::Match(lastOp, "%name% <|(") && lastOp->linkAt(1) && tok == lastOp->linkAt(1)->next())))
                 compileBinOp(tok, state, compileTerm);
             else
                 compileUnaryOp(tok, state, compileTerm);
